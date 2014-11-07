@@ -175,6 +175,22 @@ The platform differentiates two kinds of applications. Both of them are distribu
 
 Considering the applications, the Firefox OS ecosystem does not stay within the limits of devices running Firefox OS. The notions of Open Web Apps for Android and Open Web Apps for Desktop enable Marketplace apps to be installed into Android and Windows respectively. These are executed by Web Runtime, a compontent of the given platform's Firefox based browser.
 
-\section{The structure of Firefox OS}
+\section{The architecture of Firefox OS}
+
+This section reveals how Firefox OS builds up, from bottom to top, explaining each layer more deeply, because an application developer's main concerns connect to layers in higher levels, where the app interacts with the system.
+
+The lowest level operating system, named Gonk, encompasses the Linux kernel and other hardware related layers. It is a porting target of Gecko, which means, there is a port of Gecko to Gonk, just like there is a port of Gecko to Android or Windows. One difference is that Gonk is part of the Firefox OS project, so it is more lenient when it comes to Gecko, exposing direct access to the full telephony stack and display frame buffer.
+
+The next layer is the application runtime, named Gecko. It is actually the web browser engine used in many applications developed by Mozilla. It supports open web standards like HTML, CSS, and Javascript, and makes sure those APIs work well on every operating system it supports. Gecko includes, among other things, a networking stack, graphics stack and a Javascript virtual machine.
+
+At the top of the hierarchy resides the application layer, that contains the various kinds of apps, javascript libraries and Gaia. Gaia, written entirely in HTML, CSS and Javascript, is the platform's user interface and contains all the system and certified apps. It communicates with the underlying operating system through standard Web APIs, implemented by Gecko. The separation of Gaia from the system specific components enables it to run on other operating systems and web browsers, widening the potential market Firefox OS apps can reach. More information about how Gaia handles and stuctures apps can be found in the next section. 
+
+(ide egy kisebb képet beszúrni a Firefox OS felépítésérõl)
+
+\section{How Gaia handles custom apps}
+
+To imitate the behaviour of desktop browsers, where webpages live in different windows or tabs, Firefox OS opens each app in a new iframe. It has a lot of security adventages because it sandboxes the apps. This means each app has access onlty to it's own resources (cookies, IndexedDB, etc.). A practical example can be the case when the user logs in to Facebook in App A, which has no effect on App B's ability to interact with the user's account on Facebook. The life cycle of an app is the following: 
+
+(ide egy képet beszúrni az alkalmazást tartalmazó iframe html kódjáról)
 
 \end{document}
