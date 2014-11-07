@@ -10,6 +10,8 @@
 
 \documentclass[12pt]{report}
 
+\linespread{1.3}
+
 %Magyar nyelvi támogatás (Babel 3.7 vagy késõbbi kell!)
 \def\magyarOptions{defaults=hu-min}
 \usepackage[magyar]{babel}
@@ -160,23 +162,19 @@ other users can rate these, so that to be able to maintain a high quality route 
 
 My goal was to make my research more digestible for anyone interested in this topic. Every chapter starts with a theoretical part where I iterate over the possible solutions for the given subject and try to chose the most appropriate one based on usability, popularity, and other characteristics of the actual situation. After that I dig into the chosen tool more deeply to get the reader more familiar with it, and to show how this tool can solve the present problem. At the end of the chapter I guide the reader through a concrete use case with the help of the application I developed.  
 
-\chapter{Egy találó cím}
+\chapter{Introduction to Firefox OS}
 
-Ez pedig már az elsõ fejezet, ...
-helyére egy parancsot írunk
-\section{Alcím}
-Ebben alfejezetek is lehetnek
+\section{The Firefox OS ecosystem}
 
-\subsection{Al-al cím}
-Sõt al-al fejezetek is.
+Firefox OS is an open source operating system aiming mobile and tablet devices. 
+It is based on a Linux kernel and oficially named as Boot to Gecko (B2G). The main idea behind Fireox OS is to embrace the ever expanding ecosystem of the open web, and to enable the use of these tools throughout the whole application development process. One of the hottest topics of the web today is HTML5, which encompasses open web standards like HTML, CSS and Javascript. Firefox OS is built with these in mind, by developing Web APIs so that HTML5 applications can communicate with the device's hardver. It works like a web browser running on a lightweight Linux kernel, where every application is a standalone web app, even the native ones like the Camera or the Phone.
 
-\subsection{Másik}
-Na lássunk egy másodikat is.
+The User Interface of Firefox OS looks a lot like Android, with a lock screen, home screen and notification area. The deletion and closing of application works also similarly. However as it is getting more mature, it's own characteristics have started to appear. For example it does not use the paging structure of android for the apps, but rather a vertical scrollbar similar to the solution of modern web applications for handling it's contents. This infinite scrolling style does not olny charachterize the home screen, but it is utilized by also the applications, making the look and feel smooth and consistent throuthout the different views of the phone. 
 
-\subsection{Harmadik}
-Meg egy harmadikat is.
+The platform differentiates two kinds of applications. Both of them are distributed through the Firefox Marketplace. Hosted apps resides on a server and work similar to traditional web pages. The only difference is the app manifest in the app's root directory, which provides important details about the app, such as the path of the main html file and the name of the application. This information is needed to be able to install the application with a native-like procedure. There are some security constraints concerning hosted apps that does not enable them to use privileged and certified APIs. If an app needs greater controll over the phones resources, it should be distributed as a packaged app. A packaged app containes all of its resources in a zip file, with the app manifast at the root directory. Packaged apps can be further divided into three categories: web app, privileged app and certified app, going from the most restrictive one to the digitally signed categories, that enable the use of priviledged and certified APIs. Privileged apps are signed as part of the Marketplace review process, while certified apps are signed by device manufacturers. Packaged apps tend to open up more quickly than hosted apps, because all of their resources are stored locally, making the user experience more smooth.    
 
-\section{Mindjárt vége a fejezetnek}
-Tényleg, itt valóban vége.
+Considering the applications, the Firefox OS ecosystem does not stay within the limits of devices running Firefox OS. The notions of Open Web Apps for Android and Open Web Apps for Desktop enable Marketplace apps to be installed into Android and Windows respectively. These are executed by Web Runtime, a compontent of the given platform's Firefox based browser.
+
+\section{The structure of Firefox OS}
 
 \end{document}
