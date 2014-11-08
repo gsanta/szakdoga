@@ -97,13 +97,12 @@
 \vspace*{3.8cm}
 
 
-{\LARGE\bf Firefox OS }
+{\LARGE\bf Development and automated testing in Firefox OS environment }
 
 
 \vspace*{3.6cm}
 
-{\Large Diplomamunka}
-% vagy {\Large Szakdolgozat}
+{\Large Szakdolgozat}
 
 \vspace*{4cm}
 
@@ -111,8 +110,8 @@
 {\large
 \begin{tabular}{c@{\hspace{4cm}}c}
 \emph{Készítette:}     &\emph{Témavezetõ:}\\
-\bf{Sánta Gergely}  &\bf{Oktató Bonifác}\\
-informatika szakos     &egyetemi docens\\
+\bf{Sánta Gergely}  &\bf{Lengyel Zsolt}\\
+gazdaságinformatikus szakos     &\\
 hallgató&
 \end{tabular}
 }
@@ -123,7 +122,7 @@ hallgató&
 Szeged
 \\
 \vspace{2mm}
-2011
+2014
 }
 \end{center}
 
@@ -133,13 +132,14 @@ Szeged
 
 %A \chapter* parancs nem ad a fejezetnek sorszámot
 \chapter*{Feladatkiírás}
+
+The goal of the thesis is to design an effective development methodology for Firefox OS, with great emphasis on the automated testing and debugging tasks and opportunities occuring at various stages of the development. During the selection of the various tools preference should be given to already proven and mature web development technologies (since this is the main goal of Firefox OS), nonetheless the specific requirements and toolkit of the new platform should also be presented. The previously described items should be utilized with an example application besides the theoretical implementation. 
+
+
+
 %A tartalomjegyzékben mégis szerepeltetni kell, mint szakasz(section) szerepeljen:
 \addcontentsline{toc}{section}{Feladatkiírás}
 \chapter*{Tartalmi összefoglaló}
-
-A szakdolgozat célja egy hatékony fejlesztési metódus kialakítása Firefox OS rendszerre, nagy hangsúlyt fektetve a fejlesztés egyes szakaszaiban fellépõ automatikus tesztelési és hibakezelési lehetõségekre illetve feladatokra. A fejlesztést segítõ eszközök kiválasztása során lehetõség szerint törekedni kell már kiforrott webfejlesztési technológiák alkalmazására (hiszen ez a Firefox OS alapvetõ célja), mindemellett kerüljenek bemutatásra az új platform specifikus követelményei illetve eszközkészlete. Az elõzõekben megfogalmazott tételeket az elméleti megvalósítás mellett be kell mutatni egy példaalkalmazáson keresztül. 
-
-The goal of the thesis is to design an effective development methodology for Firefox OS, with great emphasis on the automated testing and debugging tasks and opportunities occuring at various stages of the development. During the selection of the various tools preference should be given to already proven and mature web development technologies (since this is the main goal of Firefox OS), nonetheless the specific requirements and toolkit of the new platform should also be presented. The previously described items should be utilized with an example application besides the theoretical implementation. 
 
 
 \addcontentsline{toc}{section}{Tartalmi összefoglaló}
@@ -187,10 +187,36 @@ At the top of the hierarchy resides the application layer, that contains the var
 
 (ide egy kisebb képet beszúrni a Firefox OS felépítésérõl)
 
-\section{How Gaia handles custom apps}
+\subsection{How Gaia handles custom apps}
 
 To imitate the behaviour of desktop browsers, where webpages live in different windows or tabs, Firefox OS opens each app in a new iframe. It has a lot of security adventages because it sandboxes the apps. This means each app has access onlty to it's own resources (cookies, IndexedDB, etc.). A practical example can be the case when the user logs in to Facebook in App A, which has no effect on App B's ability to interact with the user's account on Facebook. The life cycle of an app is the following: 
 
 (ide egy képet beszúrni az alkalmazást tartalmazó iframe html kódjáról)
 
+\section{Development tools for Firefox OS}
+
+There are multiple possibilities for developers to try their Firefox OS apps during development.
+
+\subsection{Firefox OS Simulator}
+
+ The simplest solution is the Firefox OS simulator developed by Mozilla and available as an add-on in the desktop browser. It simulates the higher layers of Firefox OS, and makes it easy for developers to test and verify their apps behaviour quickly, without a device. It runs in a window the same size as a Firefox OS device, includes the Firefox OS user interface and built-in apps, and simulates many of the Firefox OS device APIs. 
+
+After installing one of the simulator add-ons (there are multiple simulators corresponding to the version of Firefox OS), it appears in the Firefox App Manager. The app manager can be opened by typing in the URL bar the following: about:app-manager. At the bottom of the page appears the Start Simulator button, clicking it reveals the installed simulators and gives the option to install other versions of it. Choosing one of them and clicking it opens the simulator in a new window. The apps tab of the App Manager can be used to add packaged or hosted apps to the App Manager, that can be later uploaded to the simulator with the update button of the actual app's window. The debug button does the same, but it also connects a toolbox to the app, allowing to debug its code directly with the usual debugging tools the Firefox browser offers. 
+
+From Firefox 33 onwards Firefox includes a tool called WebIDE, whose purpose is to replace the App Manager. It's functionality is similar to App Manager's, but it also provides an editing environment for developers to create Firefox OS apps. Since the App Manager was more stable at the time of this writing, I use it throughout my thesis instead of the WebIde.
+
+(ide egy képet beszúrni az App Manager-rõl)
+
+\subsection{Firefox OS desktop build}
+
+The Firefox OS desktop client (B2G desktop cliend) can be used to run Web apps in a Gecko-based environment. It does not emulate device hardware, but can be useful during the development process for quick tests and user interface verification. As I noticed through my research the Desktop Build is the least popular of the possible to run Firefox apps, and mainly used by Gaia developers working on the Gaia user interface. However it has a big advantage over the simulator and the real device: it containes a pre-installed marionette server, that can be used to run user interface tests. This topic is covered deeply at Chapter 3.
+
+Adding a custom app to the desktop build is difficult, because the developer has to package the app's files himself, copy it to the appropriate location and put the app's information to a configuration json file. However from February 2014 it is possible to run a custom B2G binary (a.k.a desktop build) and/or a custom Gaia profile from the simulator, making app uploading easy thorugh the App Manager, or WebIDE. It can be done by typing about:addons to the URL bar. The Extensions tab lists the installed simulator, clicking on the Preferences button of the chosen simulator, it jumps to a page where the path of the custom B2G or Gaia profile can be selected. From then on, when running the simulator it uses the given B2G or Gaia profile instead of the built-in one, enabling to run user interface tests via marionette. I had connection problems to B2G, when trying to run it from the App Manager and WebIDE on my Ubuntu machine, so in Chapter 3, where I describe marionette tests, I do not use this solution and add my app to the desktop build by hand.    
+ 
+\subsection{Running apps on a real device}
+
+The simulator and destop build are good for running quick tests, but they lack some hardware functionlity, that makes it necessarry for developers to try their apps from time to time on a real device. Fortunately it is very easy to do. On the device Remote debugging has to be checked, which is located in Device Information > More Information > Developer. The device communicates with the computer through the Android Debug Bridge, which means on Ubuntu the ADB Helper add-on needs to be installed. From then on the attached device appears beside the Start Simulator button in App Manager or WebIDE, and can be used the same way as the simulator.
+
+Marionette is available in all Firefox OS builds, but manufacturers disable it in their image files. To run user interface tests in the same way when using a desktop build, the user has to build Firefox OS himself. It is not an easy process, and I will describe it briefly in chapter 3, where I iterate through the options of running automated tests.
+ 
 \end{document}
