@@ -61,7 +61,7 @@
 \textheight 237mm
 
 
-
+\graphicspath{ {img/} }
 
 \begin{document}
 
@@ -185,13 +185,22 @@ The next layer is the application runtime, named Gecko. It is actually the web b
 
 At the top of the hierarchy resides the application layer, that contains the various kinds of apps, javascript libraries and Gaia. Gaia, written entirely in HTML, CSS and Javascript, is the platform's user interface and contains all the system and certified apps. It communicates with the underlying operating system through standard Web APIs, implemented by Gecko. The separation of Gaia from the system specific components enables it to run on other operating systems and web browsers, widening the potential market Firefox OS apps can reach. More information about how Gaia handles and stuctures apps can be found in the next section. 
 
-(ide egy kisebb képet beszúrni a Firefox OS felépítésérõl)
+\begin{figure}[h]
+\centering
+\includegraphics{firefox_os_arch.eps}
+\caption{The architecture of Firefox OS}
+\end{figure}
 
 \subsection{How Gaia handles custom apps}
 
-To imitate the behaviour of desktop browsers, where webpages live in different windows or tabs, Firefox OS opens each app in a new iframe. It has a lot of security adventages because it sandboxes the apps. This means each app has access onlty to it's own resources (cookies, IndexedDB, etc.). A practical example can be the case when the user logs in to Facebook in App A, which has no effect on App B's ability to interact with the user's account on Facebook. The life cycle of an app is the following: 
+To imitate the behaviour of desktop browsers, where webpages live in different windows or tabs, Firefox OS opens each app in a new iframe. It has a lot of security adventages because it sandboxes the apps. This means each app has access onlty to it's own resources (cookies, IndexedDB, etc.). A practical example can be the case when the user logs in to Facebook in App A, which has no effect on App B's ability to interact with the user's account on Facebook. The next code snippet shows a typical iframe, Firefox OS sandboxes each app into.
 
-(ide egy képet beszúrni az alkalmazást tartalmazó iframe html kódjáról)
+\begin{verbatim}
+<iframe id="browser2" mozallowfullscreen="true" mozbrowser="true"
+ src="", data-url="" data-frame-type="window" data-frame-origin="...">
+</iframe>
+\end{verbatim} 
+
 
 \section{Development tools for Firefox OS}
 
@@ -205,8 +214,6 @@ After installing one of the simulator add-ons (there are multiple simulators cor
 
 From Firefox 33 onwards Firefox includes a tool called WebIDE, whose purpose is to replace the App Manager. It's functionality is similar to App Manager's, but it also provides an editing environment for developers to create Firefox OS apps. Since the App Manager was more stable at the time of this writing, I use it throughout my thesis instead of the WebIde.
 
-(ide egy képet beszúrni az App Manager-rõl)
-
 \subsection{Firefox OS desktop build}
 
 The Firefox OS desktop client (B2G desktop cliend) can be used to run Web apps in a Gecko-based environment. It does not emulate device hardware, but can be useful during the development process for quick tests and user interface verification. As I noticed through my research the Desktop Build is the least popular of the possible to run Firefox apps, and mainly used by Gaia developers working on the Gaia user interface. However it has a big advantage over the simulator and the real device: it containes a pre-installed marionette server, that can be used to run user interface tests. This topic is covered deeply at Chapter 3.
@@ -218,5 +225,80 @@ Adding a custom app to the desktop build is difficult, because the developer has
 The simulator and destop build are good for running quick tests, but they lack some hardware functionlity, that makes it necessarry for developers to try their apps from time to time on a real device. Fortunately it is very easy to do. On the device Remote debugging has to be checked, which is located in Device Information > More Information > Developer. The device communicates with the computer through the Android Debug Bridge, which means on Ubuntu the ADB Helper add-on needs to be installed. From then on the attached device appears beside the Start Simulator button in App Manager or WebIDE, and can be used the same way as the simulator.
 
 Marionette is available in all Firefox OS builds, but manufacturers disable it in their image files. To run user interface tests in the same way when using a desktop build, the user has to build Firefox OS himself. It is not an easy process, and I will describe it briefly in chapter 3, where I iterate through the options of running automated tests.
- 
+
+\subsection{Example of uploading and running the Travely app}
+
+Now I show through the example app the steps needed to convert a custom web app to become a Firefox app, and how to upload it to the simulator. As previously mentioned, each Firefox app has to have a configuration file, called manifest.webapp. It can contain a lot of information about the app, but only three are mandatory: name, description and icons. In addition to these I added the field launch path which sets the path of the starting html page of the app, and the developer field to clafify, who the application belongs to.
+\begin{verbatim}
+{
+  "name": "Travely",
+  "description": "On The Ride",
+  "launch_path": "/index.html",
+  "icons": {
+    "128": "/img/icon.jpg"
+  },
+  "developer": {
+    "name": "Gergely Santa"
+  }
+}
+\end{verbatim}
+The manifest.webapp needs to be placed in the root folder of the application. When it's done, it can be added to the App Manager as a packaged app. After starting the simulator and hitting the update button on the right side of the App Manager, the app gets uploaded to the simulator. It works the same way, when attaching a real device to the computer. The process to add an app to the desktop build will be demonstrated in chapter 3. 
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.7]{simulator.eps}
+\caption{The travely app inside the simulator}
+\end{figure}
+
+\chapter{Creating a build system for task automation}
+
+(elõreláthatólag 3-4 oldal)
+
+\chapter{Debugging tools}
+
+(elõreláthatólag 2-3 oldal)
+
+\chapter{Creating an environment to run automated UI tests}
+
+\section{What is automated UI testing and why to use it?}
+
+The reason behind automated UI testing is the same as the reason behind unit testing: verifying that the development process does not cause any unexpected behavioural changes. The difference between the two is that while unit testing verifies small pieces of code, executing tests in isolation, UI testing functions at a higher level with the purpose of demonstrating, that different pices of the system work together. In an other perspective unit tests prove that the app works correctily in theory, UI tests verify that in different concrete environments the correctness still stands. This latter approach is very important in a rapidly changing mobile environment, with many different versions, screen sizes and performance characteristics in production. There needs to be a tool, that imitates the actions of the users, makes notifications of potential problems and does it automatically in multiple environments, possibly in parallel. That is exactly what automated UI tests are for, and this chapter gives detailed information about how to do it in the Firefox OS environment.
+
+\section{How automated UI testing works in Firefox OS}
+
+The automation tool for running UI tests in Firefox OS is called Marionette. It can remotely drive either the UI or the internal Javascript of a program built on the Gecko platform, such as Firefox or Firefox OS. Marionette can be divided into two parts: the server runs on the test machine (for example on a Firefox OS device), allowing the user to connect to that server and remotely drive tests and send commands to it. It works similarly how Selenium works in the browser environment. The other part is the marionette client, that runs on the machine the device is attached to, and can connect to the marionette server on that device.
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.7]{marionette-basic-diagram.eps}
+\caption{How marionette server and client interacts}
+\end{figure}
+
+The developer interacts olny with the client, so it needs a little more explanation. It is a Python package, so python needs to be set up on the development machine to be able to use it. Pip also has to be installed, that is used to install Python tools, in this case the marionette client. When both python and pip are set up, the following command installs marionette:
+
+\begin{verbatim}
+pip install marionette_client
+\end{verbatim}
+
+To verify that marionette is successfully installed enter the python console and import the marionette package:
+
+\begin{verbatim}
+$python
+>>> from marionette import Marionette
+\end{verbatim}
+
+Before jumping to write UI tests, the next section describes the options the user has to get a device with an integrated marionette server. 
+
+\section{Options to get a marionette-enabled device}
+
+There are two possibilities to run marionette tests against some Firefox OS environment. One is to use a real device, which of course gives the most realistic environment, and can precisely simulate the actions of the user. Every Firefox OS device is shipped with a built-in marionette server, however the manufacturers disable it by default. For this reason the user needs to build Firefox OS himself, that can be a daunting task, and the process can vary from device to device (not even considering the different versions of Firefox OS). The other problem with a real device is the reduced ability to automate the tests. The device has to be attached to the computer, and it is problematic to test multiple devices at the same time, and impossible to run multiple tests in the same device in paralell. Nonetheless it is important to verify the user interface in a device from time to time making it sure, that everything works well in real circumstances. 
+
+Users have an other option to run marionette tests, which raises the automation to a higher level. The tool for this is the B2G desktop build.
+
+\chapter{Summary}
+
+(elõreláthatólag 2-3 oldal)
+
+
+
 \end{document}
