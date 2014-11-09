@@ -293,7 +293,126 @@ Before jumping to write UI tests, the next section describes the options the use
 
 There are two possibilities to run marionette tests against some Firefox OS environment. One is to use a real device, which of course gives the most realistic environment, and can precisely simulate the actions of the user. Every Firefox OS device is shipped with a built-in marionette server, however the manufacturers disable it by default. For this reason the user needs to build Firefox OS himself, that can be a daunting task, and the process can vary from device to device (not even considering the different versions of Firefox OS). The other problem with a real device is the reduced ability to automate the tests. The device has to be attached to the computer, and it is problematic to test multiple devices at the same time, and impossible to run multiple tests in the same device in paralell. Nonetheless it is important to verify the user interface in a device from time to time making it sure, that everything works well in real circumstances. 
 
-Users have an other option to run marionette tests, which raises the automation to a higher level. The tool for this is the B2G desktop build.
+Users have an other option to run marionette tests, which raises the automation to a higher level. The tool for this is the B2G desktop build. The obvious advantage of it is that no real device is needed, and the building process is easier than that of a real device. It makes the paralellism of test running also easier, because it is possible to run on the same machine as many B2G desktop build as needed, with possibly different versions of Firefox OS. For these adventages it is recommended to use this tool to run the daily tests, and only testing with a device when major changes take place, or before releasing a new version of the app.
+
+\subsection{Preparing a device to run marionette tests}
+
+As mentioned previously manufacturers disable marionette server by default, so pre-built image files are not sufficiant. The only way to enable marionette is to build B2G from source. The process varies between OS versions, and the device the user wants to build onto, so I only describe here the most important stages of the building process, and the general considerations the user has to make, before building.
+
+First the user has to make sure, he has a compatible device to build onto. A list of compatible devices are listed on developer.mozilla.org. ADB needs to be installed to establish the communication between the targeting phone and the computer. On the phone remote debuggend has to be enabled. To adb devices command can verify that the device connects properly to the computer.
+
+\begin{verbatim}
+$adb devices
+List of devices attached
+74a17088f488	device
+\end{verbatim}
+
+If everything went well, the user is ready for cloning the B2G repository from github.
+
+\begin{verbatim}
+git clone git://github.com/mozilla-b2g/B2G.git
+cd B2G
+\end{verbatim}
+
+The next step is to configure the cloned B2G for the actual device.
+
+\begin{verbatim}
+./config.sh peak
+\end{verbatim}
+
+After the configuration is done the only task left is to build it. The building automatically flashes B2G onto the phone, so the phone needs to be attached to the computer.
+
+\begin{verbatim}
+./build.sh
+\end{verbatim}
+
+This whole process can take hours to finish, so be patient.
+When the build is ready, the phone runs a marionette-enabled Firefox OS. The difference from the OS shipped by the manufacturer can be immediatly seen by the additional apps on the home screen. These apps can be used to test various parts of the OS, but mainly interesting for those developing Gaia itself. 
+
+At this stage everything works as previously, with the exception of the ability to run marionette UI tests. So the developer can attach his phone to the computer and upload his app through the App Manager thus making the app available for testing. For the marionette client to be able to connect to the server on the phone marionette's local port needs to be forwarded to the port on the device.
+
+\begin{verbatim}
+$adb forward tcp:2828 tcp:2828
+\end{verbatim}
+
+After that the client should be able to connect to the server on the phone. It can be verified with the next commands:
+
+\begin{verbatim}
+from marionette import Marionette
+marionette = Marionette()
+marionette.start_session()
+\end{verbatim}
+
+Now the phone is ready to receive UI tests.
+
+\subsection{Preparing a B2G desktop build to run marionette tests}
+
+The B2G desktop is much easier to configure, than the building process for a real device. The latest B2G desktop can be downloaded from Firefox Nightly site. After extracting it to a folder it can be started right away with the b2g script file.
+
+\begin{verbatim}
+$cd B2G
+$./b2g
+\end{verbatim}
+
+It looks the same as the B2G build for a device, with the additonal apps for testing in the home screen. Though the procedure to get a B2G desktop is quite easy, it is more complicated to add a custom app to it. As I mentioned in section "1.3.2. Firefox OS desktop build", the simulator can be configured to run a custom B2G, making the app uploading process easy, this feature is at an early stage yet, and has some bugs, when trying to upload an app to it. So I explain here how to add an app by hand, and through the process I give a deeper insight how Firefox OS stores apps internally.
+
+The apps can be found in the webapps folder of the gaia profile of b2g.
+
+\begin{verbatim}
+$cd  gaia/profile/webapps
+\end{verbatim}
+
+Each app has a corresponding folder, each folder having a unique name, that represents the actual app. I named my folder as travely, which is sufficient for testing purposes.
+
+\begin{verbatim}
+$ls -l
+...
+drwxrwxrwx 2 gsanta gsanta  4096 Oct 30 23:00 travely
+drwxrwxrwx 2 gsanta gsanta  4096 Oct 24 01:47 uitest.gaiamobile.org
+...
+\end{verbatim}
+
+The folders contain two files: one is named application.zip and containes the apps file structure with the manifest.webapp at the root. In addition the manifest.webapp needs to be stored outside of the zip too.
+
+\begin{verbatim}
+$cd travely && ls
+application.zip  manifest.webapp
+\end{verbatim}
+
+When it is done, the information about the newly added app have to be listed in the webapps.json file. This file is located at the same level as the folders containing the apps, storing information about all the apps.
+
+\begin{verbatim}
+$cd .. && ls 
+... packaged.marketplace-dev.allizom.org webapps.json ...
+\end{verbatim}
+
+Each app has a lot of fields, but only some of them are interesting right now. It is a good practice to copy the fields of a built-in app, and overwrite the necessary fields. The folder name has to be replaced to the newly app's folder name, it needs a unique localId, and the appStatus has to be changed from 3 to 1. These are obvious changes, only the last one can be confusing. The appStatus signals what kind of app it is, for example certified apps have an appStatus of 3. The reason it is important to change it to 1, because there are much more serious security restrictions applied to certified apps. When I first added the travely app to B2G desktop, I forgot to change it, and some of my js libraries failed to work (for example angularjs), and the error messages I got were very misleading so it was difficult to find what caused the problem. 
+So after changing the fields, the relevant parts in webapp.json for the travely app looks like this:
+
+\begin{verbatim}
+"travely": {
+    ...
+    "origin": "app://travely",
+    "installOrigin": "app://travely",
+    "manifestURL": "app://travely/manifest.webapp",
+    "localId": 73,
+    "appStatus": 1,
+    "id": "travely",
+    "basePath": "/home/gsanta/tools/b2g/gaia/profile/webapps",
+    "kind": "packaged",
+    "enabled": true
+    ... 
+},
+\end{verbatim}
+
+When all these changes are ready, the custom app is added successfully to B2G. Running B2G the app appears at the bottom of the home screen, and is ready to be tested by marionette.
+
+\section{Writing and running marionette UI tests}
+
+\subsection{Finding a specific app with marionette}
+
+As mentioned in 1.2.1. How Gaia handles custom apps, running applications are sandboxed into their corresponding iframes. While it is good for a lot of reasons (for example security), it makes testing more difficult, because marionette needs to find these iframes and switch to them to be able to communicate with spesific apps.
+On the internet can be found some examples, how to write marionette tests for Firefox OS (the best is provided by Mozilla at developer.mozilla.org). They explain the concept quite well, but all of them demonstrates how to test some built in application (for example the Contacts app). The problem is, that while it is easy to find these apps, because they have some well known, and well documented characteristics, it is much more difficult to refer to a custom app, that does not have these pre-defined attributes. For example
 
 \chapter{Summary}
 
