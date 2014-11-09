@@ -412,7 +412,104 @@ When all these changes are ready, the custom app is added successfully to B2G. R
 \subsection{Finding a specific app with marionette}
 
 As mentioned in 1.2.1. How Gaia handles custom apps, running applications are sandboxed into their corresponding iframes. While it is good for a lot of reasons (for example security), it makes testing more difficult, because marionette needs to find these iframes and switch to them to be able to communicate with spesific apps.
-On the internet can be found some examples, how to write marionette tests for Firefox OS (the best is provided by Mozilla at developer.mozilla.org). They explain the concept quite well, but all of them demonstrates how to test some built in application (for example the Contacts app). The problem is, that while it is easy to find these apps, because they have some well known, and well documented characteristics, it is much more difficult to refer to a custom app, that does not have these pre-defined attributes. For example
+On the internet can be found some examples, how to write marionette tests for Firefox OS (the best is provided by Mozilla at developer.mozilla.org). They explain the concept quite well, but all of them demonstrates how to test some built in application (for example the Contacts app). The problem is, that while it is easy to find these apps, because they have some well known, and well documented characteristics, it is much more difficult to refer to a custom app, that does not have these pre-defined attributes. For example in the official Mozilla documentation, the commands to open the Contacts app, and switch to it's frame is the following:
+
+\begin{verbatim}
+contacts_icon = marionette.find_element('xpath', 
+"//div[@class='icon']//span[contains(text(),'Contacts')]")
+contacts_icon.tap()
+
+# First, we need to switch context back to the System frame
+marionette.switch_to_frame()
+
+# Now, switch context to the contacts app frame
+contacts_frame = marionette.find_element('css selector',
+ "iframe[data-url*='contacts']")
+marionette.switch_to_frame(contacts_frame)
+\end{verbatim}
+
+Here both the query for finding the contacts icon and the query for finding contacts frame can be confusing in terms of how should it be applied to a custom app.
+Finding the icon in question is easy, because the name of the app can give some good anchor point for the query. For example to find the icon of the Travely app, I used the following query:
+
+\begin{verbatim}
+app_icon = self.marionette.find_element('xpath',
+ "//div[@class='icon']//span[contains(text(),'Travely')]")
+\end{verbatim}
+
+However finding the frame to switch onto is more difficult. It does not work, when trying to change the "contacts" string in the data-url to "travely". Since the apps are opened in different iframes, and it is the iframe itself which should be inspected, the usual debug tools also can not help. For example opening an app in the simulator in debug mode, and using the inspector tool of Firefox, it is not possible to "see" the outside world of the actual app, thus making it useless in this situation. Nonetheless marionette provides some functionality that can come to the developer's rescue.
+In addition to the \verb|find_element| method, marionette provides the \verb|find_elements| method, which returns a collection of dom elements, and can be used to get all the iframes inside the actual iframe. Iteration over these dom elements, it is not difficult to spot the desired iframe, by inspecting the various attributes of it. For example inspecting the \verb|src| attribute of the iframes I found that it contains the string, I declared in the webapps.json as the origin of the actual app.
+
+\begin{verbatim}
+webapps.json
+...
+"travely": {
+    "origin": "app://travely",
+    ...  
+  },
+...
+
+iframe of travely
+<iframe src="app://travely/index.html" ...></iframe>
+\end{verbatim}
+
+With this knowlege it is easy to get the iframe of travely and switch to it:
+
+\begin{verbatim}
+app_frame = self.marionette.find_element('css selector',
+ "iframe[src*='travely']")
+self.marionette.switch_to_frame(app_frame)
+\end{verbatim}
+
+\subsection{The process of opening an app}
+
+The previous subsection explained how to find the iframe of a custom app, using that technique I demonstrate the process of opening an app from the initial state of Firefox OS, which is the state we get after starting B2G desktop (or turning on a phone). This means that the screen is locked, and no app is running. The steps that need to be done from a user's prespective are as follows:
+
+\begin{itemize}
+    \item unlock the screen,
+    \item scroll to the bottom of the home screen,
+    \item tap to the icon of the app
+\end{itemize}
+
+From marionette's perspective, there are a little bit more tasks to do, but the essence of the process is the same:
+
+\begin{verbatim}
+marionette = Marionette()
+marionette.start_session()
+
+# Unlock the screen
+marionette.execute_script(
+'window.wrappedJSObject.lockScreen.unlock();')
+
+time.sleep(2)
+#scroll to the bottom of the screen
+marionette.execute_script(
+"window.scrollTo(0,document.body.scrollHeight);")
+
+time.sleep(2)
+home_frame = marionette.find_element('css selector',
+ 'div.homescreen iframe')
+marionette.switch_to_frame(home_frame)
+        
+app_icon = self.marionette.find_element('xpath',
+ "//div[@class='icon']//span[contains(text(),'Travely')]")
+app_icon.tap()
+
+#Switch context back to the base frame
+marionette.switch_to_frame()
+time.sleep(5)
+
+#Switch context to the travely app
+app_frame = self.marionette.find_element('css selector',
+ "iframe[src*='travely']")
+marionette.switch_to_frame(app_frame)
+
+\end{verbatim}
+
+If everything ran successfully, the travely app opens, with marionette switched to it's frame. So from now on, all marionette commands will be executed in the context of the travely app.
+
+\subsection{Running tests against an app}
+
+(elõreláthatólag még 2-3 oldal)
 
 \chapter{Summary}
 
