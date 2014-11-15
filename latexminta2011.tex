@@ -126,23 +126,38 @@ Szeged
 }
 \end{center}
 
-
-%A tartalomjegyzék:
-\tableofcontents
-
 %A \chapter* parancs nem ad a fejezetnek sorszámot
-\chapter*{Feladatkiírás}
+\addcontentsline{toc}{section}{Task description}
+\chapter*{Task description}
 
 The goal of the thesis is to design an effective development methodology for Firefox OS, with great emphasis on the automated testing and debugging tasks and opportunities occuring at various stages of the development. During the selection of the various tools preference should be given to already proven and mature web development technologies (since this is the main goal of Firefox OS), nonetheless the specific requirements and toolkit of the new platform should also be presented. The previously described items should be utilized with an example application besides the theoretical implementation. 
 
-
-
 %A tartalomjegyzékben mégis szerepeltetni kell, mint szakasz(section) szerepeljen:
-\addcontentsline{toc}{section}{Feladatkiírás}
-\chapter*{Tartalmi összefoglaló}
+\addcontentsline{toc}{section}{Content Summary}
+\chapter*{Content Summary}
 
+\begin{itemize}
+    \item \textbf{Name of thesis}\newline
+    Creation of a development environment for Firefox OS with great emphasis on test automation. 
 
-\addcontentsline{toc}{section}{Tartalmi összefoglaló}
+    \item \textbf{Description of project}\newline
+	The goal of this project is to create a development environment for Firefox OS, using open source tools, with great emphasis on test automation. The project also includes an example application, that helps to demonstrate the tools and techniques. 
+
+    \item \textbf{The method of solution}\newline
+	Creation of a build system, customized to Firefox OS's needs, but mainly with the use of already popular techniques and tools. User interface test automation with marionette.
+
+    \item \textbf{Applied tools, methods}\newline
+        Firefox OS simulator, Firefox OS desktop build, Firefox OS device, javascript, python, marionette, htlm5, ionic
+
+    \item \textbf{Achievments}\newline
+        A working build system for the automation of development and testing. Working automated UI tests for Firefox OS desktop build, and for device. An example application developed with these tools to provide a better understaning of the subject.
+
+    \item \textbf{Keywords}\newline
+	Firefox OS, Marionette, Test automation, Build system, Javascript, Simulator 
+\end{itemize}
+
+%A tartalomjegyzék:
+\tableofcontents
 
 \chapter*{Introduction}
 \addcontentsline{toc}{section}{Introduction}
@@ -250,15 +265,27 @@ The manifest.webapp needs to be placed in the root folder of the application. Wh
 \caption{The travely app inside the simulator}
 \end{figure}
 
-\chapter{Creating a build system for task automation}
-
-(elõreláthatólag 3-4 oldal)
-
 \chapter{Debugging tools}
 
-(elõreláthatólag 2-3 oldal)
+\section{The WebIde tool as an environment for debugging}
 
-\chapter{Creating an environment to run automated UI tests}
+Mozilla offers some good tools to debug a Firefox OS application. Until recently the App Manager was the environment for these tools, but now Mozilla has shipped a new tool called WebIde, which is a replacement for the App Manager. In the introduction I mentioned, that WebIde is not stable enough, and I had some problem with it to upload apps, but now I was trying out the new Firefox Developer Edition, and WebIde seems to work correctly there. So in this chapter I'm going to  use this tool to demonstrate the debugging capabilities.
+
+WebIde is very similar to App Manager, but it looks and works more smoothly, for example to install a simulator to the App Manager, it have to be done from some link on developer.mozilla.org, meanwhile WebIde has built-in handling to install and remove simulators. WebIde also offers a development environment with syntax highlighting and autocomplete capabilities, that makes an ideal environment for quick or experiment changes (however in my opinion it can not be a replacement for a normal IDE yet).
+
+\section{The process of debugging.}
+
+This section describes the steps of staring the debug process, and gives brief information about the various debugging capabilities. In Firefox Developer Edition, WebIde has an icon at the right top toolbar section. When clicking on it, WebIde opens in a new window. At the top right section of this window, the user can handle the runtimes (for example connecting to a device, opening or installing a simulator), and at the top left, the user can handle the apps (adding, opening or creating new apps). I added the Travely app to it, then installed and started a simulator. When it is done the app can be uploaded with the "play" button at the top center of WebIde. After the app is installed on the simulator, it opens automatically, and at that point the app is ready for debugging.
+
+There is a "pause" button at the top center, called Debug App, which can start the debugging process. Clicking on it, WebIde opens the developer tools window, which is basically the same as the developer tools for normal web apps running in the browser. Depending on the runtime, may not every tool is available, but the basics are always there: the Inspector, Console, Javascript Debugger, Style Editor, Profiler. Just like in web pages, any changes made in the developer tools, are immediately visible in the app.
+
+There are also tools for monitoring an app's performance. The Monitor panel offers a good overview of a device's various performance characteristics, and can be useful for detecting problems like memory leak.
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.7]{inspector.eps}
+\caption{The inspector debug tool in action}
+\end{figure}
 
 \section{What is automated UI testing and why to use it?}
 
@@ -506,15 +533,209 @@ marionette.switch_to_frame(app_frame)
 \end{verbatim}
 
 If everything ran successfully, the travely app opens, with marionette switched to it's frame. So from now on, all marionette commands will be executed in the context of the travely app.
+In the above example I used time.sleep to handle the delay of the user controls, otherwise the commands would run too quickly, causing test failures, even if the tests are correct. However this approach is not the best, and in the next section I present a more appropriate and error-proof solution.
 
 \subsection{Running tests against an app}
 
-(elõreláthatólag még 2-3 oldal)
+In this subsection I demonstrate, how to test the login form of the Travely application. It is important not only to test successful scenarios from the user's perspective, but to also provide the unexpected behaviours, users are capable of.So let's see, what kind of scenarios can come up, concerning the login form:
+
+\begin{itemize}
+    \item the user gives a wrong username or password 
+    \item the user does not want to log in and hits the cancel button
+    \item the user successfuly logs in
+\end{itemize}
+
+This list is not fully exhaustive, but good enough to ensure, that the login form works generally correctly.
+
+To organize the code better, I create a new Python class with methods corresponding to the test cases. The general structure of the class looks like this:
+
+\begin{verbatim}
+import time
+from marionette import Marionette
+from marionette import Wait
+import unittest
+
+class TestContacts(unittest.TestCase):
+    def setUp(self):
+        #... code to init marionette, unlock screen etc.
+    def open_app(self):
+        #...
+    def test_cancel_login(self):
+        assert 1 == 2
+    def test_wrong_user_name(self):
+        assert 1 == 2
+    def test_successful_login(self):
+        assert 1 == 2
+    def tearDown(self):
+        self.marionette.delete_session()
+
+if __name__ == '__main__':
+    unittest.main()
+
+\end{verbatim}
+
+When this file is run against the app, it displayes three failing assertions. It is a good practice to start with failing test cases, and to fix them one by one until all of them will be successful. I start with the test case \verb|test_cancel_login|:
+
+The code of the test should be put into a method, which starts with the \verb|test_| prefix.
+
+\begin{verbatim}
+0 def test_cancel_login(self):
+\end{verbatim}
+
+The first line taps onto the toggle-left button, which brings the menu into the viewport, that contains the login button. At previous examples I used time.sleep to wait for elements to appear, and I explained, why is it not a good solution. Here I changed it with dynamic waits. The nature of dynamic waits is to wait for some condition to get satisfied. In this case it waits for the link with the login id to display, signaling that the toggle menu is rendered.
+
+\begin{verbatim}
+1   self.marionette.find_element('id', 'toggle-left').tap()
+2   Wait(self.marionette).until(lambda m: m.find_element(
+      'id','login').is_displayed())
+\end{verbatim}
+
+The next line taps onto the login link, that opens the login form in a popup window. In this case the dynamic wait can wait for some input field of the form to appear.
+
+\begin{verbatim}
+4   self.marionette.find_element('id', 'login').tap()
+5   Wait(self.marionette).until(lambda m: m.find_element(
+      'id','inputLoginUserName').is_displayed())
+\end{verbatim}
+
+After that it clicks to the cancel button, and waits for the form to close.
+
+\begin{verbatim}
+7   self.marionette.find_element('id', 'cancelLogin').tap()
+8   Wait(self.marionette).until(lambda m: not m.find_element(
+      'id','inputLoginUserName').is_displayed())
+\end{verbatim}
+
+The last line contains the assertion. The assertion determines, wheater the test was successful or not, evaluating some boolean expression. In this case it queries if the login link is still displayed. After a successful login, the login link would change to logout, so this assertion assures, both that the cancel button did not cause a login, and that the toggle menu remained open.
+
+\begin{verbatim}
+10  assert self.marionette.find_element('id', 'login')
+    .is_displayed() 
+\end{verbatim}
+
+Now the \verb|test_cancel_login| test case should run successfuly, so there remaind only two failing test cases. Let's see the code of the \verb|test_wrong_username| method: 
+
+\begin{verbatim}
+0 def test_failed_login(self):
+1   self.marionette.find_element('id', 'toggle-left').tap()
+2   # Wait...
+3
+4   self.marionette.find_element('id', 'login').tap()
+5   # Wait...
+6
+7   self.marionette.find_element('id', 'inputLoginUserName')
+    .clear()
+8   self.marionette.find_element('id', 'inputLoginUserName')
+    .send_keys('a')
+9   self.marionette.find_element('id', 'inputLoginPassword')
+    .send_keys('xxxx')
+10  self.marionette.find_element('id', 'submitLogin').tap()
+11
+12  authFailedMessage = self.marionette.find_element(
+      'id', 'inputLoginAuthFailed').text     
+13  assert authFailedMessage == 'Bad username or password'
+\end{verbatim}
+
+It is similar to the \verb|test_cancel_login| test case, but there are some new things to explain. In this case I want to test an unsuccessful login, with bad username. So I need to use here some new methods of marionette to fill the form. At line 7 I clear the username input field in case it was not empty. In the next line I deliberately give a wrong username. In line 9 I fill the password field, the content of which is not important here, just the fact that it should not be empty to avoid some other error messages, than expected (for example: password field can not be empty). When the form is ready, I tap onto the submit button, and on line 13 assert, that there is an error message with the content "Bad username or password".
+
+Now there remained only one failing test case, which is the \verb|test_successful_login|. It also shares the same characteristics as the two previous test cases, so the next code excerpt shows only the relevant parts:
+
+\begin{verbatim}
+0 def test_successful_login(self):
+    #open the login form
+8   self.marionette.find_element('id', 'inputLoginUserName')
+    .send_keys('santag')
+9   self.marionette.find_element('id', 'inputLoginPassword')
+    .send_keys('1234')
+10  self.marionette.find_element('id', 'submitLogin').tap()
+11  assert self.marionette.find_element('id', 'logout')
+    .is_displayed()
+\end{verbatim}
+
+In line 8 and 9 I fill in the form with the correct credentials, and tap onto the submit button. After a successful login the login link on the left menu changes to logout, and that's what the assertion expects at line 11. 
 
 \chapter{Summary}
 
-(elõreláthatólag 2-3 oldal)
+In this chapter I provide a way to integrate the test automation into the build system itself, to be able to use the result of the tests as dependencies of other task. This can be useful in situations like deploying, or commiting, when it is important to have a stable, correctly working app.
 
+\section {Selecting a build tool}
+There are many different ways to build web applications, most of them consisting of a text file, containing the various tasks, like watching, compiling, minifying files, or running tests. I selected gulp.js to demonstrate the building process, because of it's popularity and simplicity.
+
+Gulp can be installed with the npm (node package manager) tool, with the folloving command:
+
+\begin{verbatim}
+npm install --global gulp
+\end{verbatim}
+
+When it is installed, it can be run with the \verb|gulp| command. To use gulp, there needs to be a file somewhere inside the apps folder structure, that containes the tasks. It is a simple js file, and since it is run via node.js, it can use commonjs style modules. A typical task looks like the following:
+
+\begin{verbatim}
+gulp.task('watch', function() {
+  gulp.watch(paths.sass, ['sass']);
+  gulp.watch('www/src/**/*.coffee', ['coffeeLint', 'coffee'])
+  gulp.watch(['www/js/**/*.js', 'tests/**/*.js'], ['test'])
+});
+\end{verbatim}
+
+This task is used to watch files for changes, and when it detects a change, the corresponding tasks are executed. In line 2, when a sass file changes, the sass task compiles it to css. In line 3, the coffee files are first linted (which checks the style of the code), then it is compiled into js, and line 4 runs the unit tests inside of the test folder every time a js file changes.
+
+\section{Creating a build task that runs ui-test as dependency}
+
+Now let's create a buildForFFOS task, that copies all the compiled files and assets into the build/ffos folder, but before doing so, it runs the automated marionette ui tests. The build task is run, only if all of the ui tests have run succesfully. First I created a bash file that containes the script, that starts the B2G desktop and runs the tests:
+
+\begin{verbatim}
+0  #!/bin/bash
+1
+2  /home/gsanta/tools/b2g/b2g &
+3  sleep 10s
+4  python tests/ui/test.py
+\end{verbatim}
+
+Line 3 starts the B2G desktop, line 4 waits for 10 second to let B2G to be ready for the tests, and line 4 starts the test file. I put this script file into the test/ui folder, and named it to start.sh.
+
+Now I get back to the gulpfile and create a task, that runs the above script:
+
+\begin{verbatim}
+1  var shell = require('gulp-shell');
+2  ...
+3  gulp.task('test-ui', shell.task([  
+4    './test/ui/start.sh',
+5   ]));
+
+\end{verbatim} 
+
+Line 1 imports the gulp-shell task as a module, which enables the use of shell commands inside of tasks. Line 3 creates a new task, called test-ui, and line 4 executes the previously created script file. 
+
+The task to build for ffos is the following:
+
+\begin{verbatim}
+1  gulp.task('build-ffos', ['coffee', 'sass', 'test-ui'],
+2  function() {
+3    gulp.src('www/src/**/*.js')
+4      .pipe(uglify())
+5      .pipe(concat('app.js'))
+6      .pipe(gulp.dest('build/ffos/js'))
+7
+8    gulp.src('www/templates/**/*.html')
+9      .pipe(gulp.dest('build/ffos/templates'))
+10
+11   gulp.src('www/lib/**/*.min.js')
+12     .pipe(gulp.dest('build/ffos/js/lib'))
+13  
+14   // copy css, img too
+15
+16   gulp.src('www/misc/manifest.webapp')
+17    .pipe(gulp.dest('build/ffos/')
+18 })
+\end{verbatim}
+
+The second parameter containes the dependencies of the task: it compiles the coffeescript files to js, compiles the sass files to css, and at the end runs the test-ui task to run the marionette tests. If any of the dependencies fails, the build-ffos task will not be executed. The build-ffos task copies the various files into a destination folder, with the manifest.webapp file included, thus making it a Firefox OS packaged app.
+
+\chapter{Summary}
+
+In my thesis I investigated the different parts of the development workflow for Firefox OS. At the beginning I gave a solid overview about the whole ecosystem of Firefox OS. I demonstrated the tools (Simulator, B2G desktop, App Manager, WebIde), and gave examples how to use them. The main part of my thesis was about the automated testing capabilities. For the automated testing to work, first I needed to make some preparations on the tools. I created a custom build for my test Firefox OS device, which had marionette enabled, so it could be used for testing. In addition I needed to figure out, how to add custom apps to B2G desktop, because it could not be used with App Manager or WebIde to upload apps. When the preparation was ready I went on to make some real automated tests, and demonstrated it with the help of my custom app, called Travely.
+
+At the and of my thesis I connected the automated tests with a build tool to help full task automation. At the and of my research I draw some conclusion: the Firefox OS, with all of it's surrounding tools, make it a promising ecosystem for developing web apps for mobile environments. The tools are not yet stable enough, the documentation is sparse, and Firefox OS, as a mobile operation system can not compete yet with the market leaders. Hovewer the innovation, brought to this environment brings some new aspects into light, that can make mobile development more integrated, easy and consequently cheaper for mobile software companies. So I think when the market is ready toThe tools are not yet stable enough, the documentation is sparse, and Firefox OS, as a mobile operation system can not compete yet with the market leaders. Hovewer the innovation, brought to this environment brings some new aspects into light, that can make mobile development more integrated, easy and consequently cheaper for mobile software companies. So I think when the market realizes, that mobile app development follows the same path as desktop app development, and emphasis moves toward mobile web, there will be a consise and stable framework for making this leap.    
 
 
 \end{document}
